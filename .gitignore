@@ -1,8 +1,31 @@
+# Python virtual environment
+venv/
+.env
+*.venv
+
+# Environment variables
+.env
+*.env
+
+# SQLite database
+budget_buddy.db
+*.db
+
+# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-venv/
-*.sqlite
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS system files
+.DS_Store
+
+# Logs and temporary files
 *.log
-.env
+*.tmp

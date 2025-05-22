@@ -1,11 +1,9 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-import os
 from database import init_db
 import mcp_tools
 import agents
-from dependencies import get_gemini_client
 
 load_dotenv()
 
@@ -31,11 +29,3 @@ async def health_check():
 # Include routers
 app.include_router(mcp_tools.router)
 app.include_router(agents.router)
-
-# Add agent endpoints with Gemini dependency
-app.add_api_route(
-    "/agent/recommendation/generate",
-    agents.generate_recommendation,
-    methods=["POST"],
-    dependencies=[Depends(get_gemini_client)]
-)
