@@ -28,4 +28,4 @@ __pycache__/
 
 # Logs and temporary files
 *.log
-*.tmp
+*.tmpnode_modules/
