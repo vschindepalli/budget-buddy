@@ -56,7 +56,7 @@ export default function App() {
   const handleExpenseAdded = async (expense: Omit<Expense, "id">) => {
     setLoading(true)
     try {
-      // Process expense through AI agent
+      //process expense through AI agent
       const response = await fetch("http://localhost:8000/agent/expense/process", {
         method: "POST",
         headers: {
