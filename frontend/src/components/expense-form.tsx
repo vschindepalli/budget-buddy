@@ -56,12 +56,12 @@ export function ExpenseForm({ onExpenseAdded, loading }: ExpenseFormProps) {
     setDate(new Date().toISOString().split("T")[0])
   }
 
-  // Show success message when loading completes and form is reset
+  //show success message when loading completes and form is reset
   useEffect(() => {
     if (!loading && category === "" && amount === "" && showSuccess === false) {
       setShowSuccess(true)
 
-      // Hide the success message after 3 seconds
+      //hide the success message after 3 seconds
       const timer = setTimeout(() => {
         setShowSuccess(false)
       }, 3000)

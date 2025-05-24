@@ -11,9 +11,9 @@ class MCPResponse(BaseModel):
     error: str | None = None
 
 async def fetch_cost_of_living(city: str) -> CostOfLiving:
-    # Mock Numbeo API call (replace with real API if key available)
+    #mock Numbeo API call (replace with real API if key available)
     async with aiohttp.ClientSession() as session:
-        # Example: Replace with actual Numbeo API endpoint
+        #example: Replace with actual Numbeo API endpoint
         return CostOfLiving(city=city, grocery_index=75.0)  # Mock data
 
 @router.post("/add_expense", response_model=MCPResponse)

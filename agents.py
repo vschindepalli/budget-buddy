@@ -6,17 +6,17 @@ import os
 import json
 from typing import List, Dict, Any, Optional
 
-# Assuming these are in the same directory or accessible via Python path
+#Assuming these are in the same directory or accessible via Python path
 from models import Expense #models.py
 from mcp_tools import fetch_cost_of_living #mcp_tools.py
-# Ensure add_tracked_goal is imported from your latest database.py
+#Ensure add_tracked_goal is imported from your latest database.py
 from database import add_expense, get_expenses, add_tracked_goal
 
 router_agents = APIRouter(prefix="/agent", tags=["Agent Endpoints"])
 router_api = APIRouter(prefix="/api", tags=["General API Endpoints"])
 
 
-# --- Pydantic Models ---
+#pydantic models
 class TrackGoalPayload(BaseModel):
     tip_id: str
     tip_text: str
@@ -42,7 +42,7 @@ class ProcessExpenseResponse(BaseModel):
     recommendation: Optional[JsonRpcResponseResult] = None
 
 
-# --- Gemini Client Dependency ---
+#Gemini Client Dependency
 async def get_gemini_client():
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
@@ -51,7 +51,7 @@ async def get_gemini_client():
     genai.configure(api_key=api_key)
     return genai.GenerativeModel("gemini-2.5-flash-preview-05-20")
 
-# --- Helper for Internal Agent Calls ---
+#Helper for Internal Agent Calls
 async def send_jsonrpc_request(url: str, method: str, params: dict, request_id: int) -> Optional[Dict[str, Any]]:
     async with aiohttp.ClientSession() as session:
         payload = JsonRpcRequest(method=method, params=params, id=request_id).model_dump()
@@ -78,7 +78,7 @@ async def send_jsonrpc_request(url: str, method: str, params: dict, request_id: 
             return {"error": {"code": -32003, "message": f"Network error calling dependent agent: {e}"}}
 
 
-# --- Budget Recommendation Agent Logic ---
+#Budget Recommendation Agent Logic
 @router_agents.post("/recommendation/generate", response_model=JsonRpcResponse)
 async def generate_budget_recommendation(request: JsonRpcRequest, gemini_client: genai.GenerativeModel = Depends(get_gemini_client)):
     try:
@@ -129,14 +129,14 @@ async def generate_budget_recommendation(request: JsonRpcRequest, gemini_client:
         
         return JsonRpcResponse(id=request.id, result=JsonRpcResponseResult(recommendations=parsed_data["recommendations"]))
 
-    except HTTPException: # Specifically re-raise HTTPExceptions
+    except HTTPException: #specifically re-raise HTTPExceptions
         raise
-    except Exception as e: # Catch other unexpected errors
+    except Exception as e: #catch other unexpected errors
         import traceback
         print(f"Error in generate_budget_recommendation: {str(e)}\n{traceback.format_exc()}")
         return JsonRpcResponse(id=request.id, error={"code": -32000, "message": f"Server error in budget recommendations: {str(e)}"})
 
-# --- Savings Tip Agent Logic ---
+#Savings Tip Agent Logic
 @router_agents.post("/savings/generate", response_model=JsonRpcResponse)
 async def generate_savings_tips_agent(request: JsonRpcRequest, gemini_client: genai.GenerativeModel = Depends(get_gemini_client)):
     try:
@@ -192,15 +192,15 @@ async def generate_savings_tips_agent(request: JsonRpcRequest, gemini_client: ge
         
         return JsonRpcResponse(id=request.id, result=JsonRpcResponseResult(savingsTips=parsed_data["savingsTips"]))
 
-    except HTTPException: # Specifically re-raise HTTPExceptions
+    except HTTPException: #specifically re-raise HTTPExceptions
         raise
-    except Exception as e: # Catch other unexpected errors
+    except Exception as e: #catch other unexpected errors
         import traceback
         print(f"Error in generate_savings_tips_agent: {str(e)}\n{traceback.format_exc()}")
         return JsonRpcResponse(id=request.id, error={"code": -32000, "message": f"Server error in savings tips: {str(e)}"})
 
 
-# --- Main Expense Processing Flow (Endpoint called by Frontend) ---
+#Main Expense Processing Flow (Endpoint called by Frontend)
 @router_agents.post("/expense/process", response_model=ProcessExpenseResponse)
 async def process_expense(expense: Expense, gemini_client: genai.GenerativeModel = Depends(get_gemini_client)):
     try:
@@ -273,15 +273,15 @@ async def process_expense(expense: Expense, gemini_client: genai.GenerativeModel
             recommendation=final_combined_result
         )
 
-    except HTTPException: # Specifically re-raise HTTPExceptions
+    except HTTPException: #specifically re-raise HTTPExceptions
         raise 
-    except Exception as e: # Catch other unexpected errors
+    except Exception as e: #catch other unexpected errors
         import traceback
         print(f"Error in process_expense: {str(e)}\n{traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Unexpected error in expense processing: {str(e)}")
 
 
-# --- Endpoint to Track a Savings Goal ---
+#Endpoint to Track a Savings Goal
 @router_api.post("/track_goal", status_code=201)
 async def track_savings_goal(payload: TrackGoalPayload):
     try:
@@ -289,12 +289,12 @@ async def track_savings_goal(payload: TrackGoalPayload):
         if success:
             return {"message": "Savings goal is now being tracked."}
         else:
-            # This specific condition (duplicate or DB error handled by add_tracked_goal returning False)
-            # should result in a 409.
+            #this specific condition (duplicate or DB error handled by add_tracked_goal returning False)
+            #should result in a 409.
             raise HTTPException(status_code=409, detail="Goal may already be tracked or a database error occurred preventing tracking.")
-    except HTTPException: # ADDED: Specifically catch and re-raise HTTPExceptions
+    except HTTPException: #ADDED: Specifically catch and re-raise HTTPExceptions
         raise
-    except Exception as e: # Catch other, truly unexpected errors
+    except Exception as e: #catch other, truly unexpected errors
         print(f"Unexpected error tracking savings goal: {str(e)}")
         import traceback
         traceback.print_exc() # This will print the full traceback for unexpected errors

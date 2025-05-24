@@ -30,12 +30,12 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [totalExpenses, setTotalExpenses] = useState(0)
 
-  // Fetch expenses on component mount
+  //fetch expenses on component mount
   useEffect(() => {
     fetchExpenses()
   }, [])
 
-  // Calculate total expenses when expenses change
+  //calculate total expenses when expenses change
   useEffect(() => {
     const total = expenses.reduce((sum, expense) => sum + expense.amount, 0)
     setTotalExpenses(total)
@@ -68,7 +68,7 @@ export default function App() {
       if (response.ok) {
         const data = await response.json()
         setRecommendations(data.recommendation)
-        await fetchExpenses() // Refresh expenses list
+        await fetchExpenses() //refresh expenses list
       }
     } catch (error) {
       console.error("Error processing expense:", error)
@@ -91,7 +91,7 @@ export default function App() {
       })
 
       if (response.ok) {
-        // Show success feedback
+        //show success feedback
         console.log("Goal tracked successfully")
       }
     } catch (error) {
@@ -99,7 +99,7 @@ export default function App() {
     }
   }
 
-  // Get expense categories for overview
+  //get expense categories for overview
   const expensesByCategory = expenses.reduce(
     (acc, expense) => {
       acc[expense.category] = (acc[expense.category] || 0) + expense.amount
