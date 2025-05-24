@@ -7,8 +7,8 @@ import json
 from typing import List, Dict, Any, Optional
 
 # Assuming these are in the same directory or accessible via Python path
-from models import Expense # From your models.py
-from mcp_tools import fetch_cost_of_living # From your mcp_tools.py
+from models import Expense #models.py
+from mcp_tools import fetch_cost_of_living #mcp_tools.py
 # Ensure add_tracked_goal is imported from your latest database.py
 from database import add_expense, get_expenses, add_tracked_goal
 
