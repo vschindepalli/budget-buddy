@@ -1,6 +1,6 @@
 # Budget Buddy 💰🤖
 
-Budget Buddy is a smart financial assistant designed to help you manage your expenses and receive personalized, AI-driven budget recommendations and savings tips. Log your expenses and let Budget Buddy, powered by Google's Gemini API, provide insightful advice to optimize your finances!
+Budget Buddy is a smart financial assistant designed to help you manage your expenses and receive personalized, AI-driven budget recommendations and savings tips. Log your expenses and let Budget Buddy, powered by Google's Gemini 2.5 Flash, provide insightful advice to optimize your finances!
 
 ## ✨ Features
 
