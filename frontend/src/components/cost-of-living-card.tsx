@@ -33,7 +33,7 @@ export function CostOfLivingCard() {
     setError("")
 
     try {
-      const response = await fetch(`http://localhost:8000/mcp/fetch_cost_of_living?city=${encodeURIComponent(city)}`)
+      const response = await fetch(`/mcp/fetch_cost_of_living?city=${encodeURIComponent(city)}`)
       const data = await response.json()
 
       if (data.result) {
