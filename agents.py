@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Body
 from pydantic import BaseModel, Field
-import aiohttp
 import google.generativeai as genai
 import os
 import json
@@ -50,33 +49,6 @@ async def get_gemini_client():
         raise HTTPException(status_code=500, detail="API key configuration error.")
     genai.configure(api_key=api_key)
     return genai.GenerativeModel("gemini-2.5-flash-preview-05-20")
-
-#Helper for Internal Agent Calls
-async def send_jsonrpc_request(url: str, method: str, params: dict, request_id: int) -> Optional[Dict[str, Any]]:
-    async with aiohttp.ClientSession() as session:
-        payload = JsonRpcRequest(method=method, params=params, id=request_id).model_dump()
-        try:
-            async with session.post(url, json=payload, timeout=30) as response:
-                if response.status != 200:
-                    error_detail = await response.text()
-                    print(f"Agent communication failed (to {url}). Status: {response.status}, Detail: {error_detail}")
-                    return {"error": {"code": response.status, "message": f"Agent communication failed: {error_detail}"}}
-                
-                try:
-                    data = await response.json()
-                    if "jsonrpc" in data and "id" in data:
-                        return data 
-                    else:
-                        print(f"Received unexpected JSON-RPC response structure from {url}: {data}")
-                        return {"error": {"code": -32001, "message": "Invalid JSON-RPC response structure from dependent agent"}}
-                except json.JSONDecodeError:
-                    text_response = await response.text()
-                    print(f"Failed to decode JSON from agent response ({url}). Response text: {text_response}")
-                    return {"error": {"code": -32002, "message": "Failed to decode JSON from dependent agent response"}}
-        except aiohttp.ClientError as e:
-            print(f"AIOHTTP client error calling {url}: {e}")
-            return {"error": {"code": -32003, "message": f"Network error calling dependent agent: {e}"}}
-
 
 #Budget Recommendation Agent Logic
 @router_agents.post("/recommendation/generate", response_model=JsonRpcResponse)
@@ -216,22 +188,20 @@ async def process_expense(expense: Expense, gemini_client: genai.GenerativeModel
             "city": city_for_context 
         }
         
-        budget_agent_url = "http://localhost:8000/agent/recommendation/generate"
-        budget_req_id = 1 
-        budget_response_full = await send_jsonrpc_request(
-            url=budget_agent_url,
+        budget_req_id = 1
+        budget_request = JsonRpcRequest(
             method="generate_recommendation",
             params={"summary": summary_for_budget},
-            request_id=budget_req_id
+            id=budget_req_id
         )
+        parsed_budget_response = await generate_budget_recommendation(budget_request, gemini_client)
 
         budget_recommendations_list: List[str] = []
-        if budget_response_full and not budget_response_full.get("error"):
-            parsed_budget_response = JsonRpcResponse(**budget_response_full)
+        if parsed_budget_response and not parsed_budget_response.error:
             if parsed_budget_response.result and parsed_budget_response.result.recommendations:
                 budget_recommendations_list = parsed_budget_response.result.recommendations
-        elif budget_response_full and budget_response_full.get("error"):
-             print(f"Error from budget recommendation agent: {budget_response_full.get('error')}")
+        elif parsed_budget_response and parsed_budget_response.error:
+            print(f"Error from budget recommendation agent: {parsed_budget_response.error}")
 
 
         cost_data = await fetch_cost_of_living(city_for_context)
@@ -245,23 +215,20 @@ async def process_expense(expense: Expense, gemini_client: genai.GenerativeModel
             "budget_recommendations": budget_recommendations_list
         }
 
-        savings_agent_url = "http://localhost:8000/agent/savings/generate"
         savings_req_id = budget_req_id + 1
-        
-        savings_response_full = await send_jsonrpc_request(
-            url=savings_agent_url,
+        savings_request = JsonRpcRequest(
             method="generate_savings_tips",
             params=summary_for_savings,
-            request_id=savings_req_id
+            id=savings_req_id
         )
+        parsed_savings_response = await generate_savings_tips_agent(savings_request, gemini_client)
 
         savings_tips_list: List[Dict[str, str]] = []
-        if savings_response_full and not savings_response_full.get("error"):
-            parsed_savings_response = JsonRpcResponse(**savings_response_full)
+        if parsed_savings_response and not parsed_savings_response.error:
             if parsed_savings_response.result and parsed_savings_response.result.savingsTips:
                 savings_tips_list = parsed_savings_response.result.savingsTips
-        elif savings_response_full and savings_response_full.get("error"):
-            print(f"Error from savings tips agent: {savings_response_full.get('error')}")
+        elif parsed_savings_response and parsed_savings_response.error:
+            print(f"Error from savings tips agent: {parsed_savings_response.error}")
         
         final_combined_result = JsonRpcResponseResult(
             recommendations=budget_recommendations_list,
@@ -305,4 +272,3 @@ async def track_savings_goal(payload: TrackGoalPayload):
 # from agents import router_agents, router_api
 # app.include_router(router_agents)
 # app.include_router(router_api)
-

@@ -43,7 +43,7 @@ export default function App() {
 
   const fetchExpenses = async () => {
     try {
-      const response = await fetch("http://localhost:8000/mcp/get_expenses")
+      const response = await fetch("/mcp/get_expenses")
       const data = await response.json()
       if (data.result && data.result.expenses) {
         setExpenses(data.result.expenses)
@@ -57,7 +57,7 @@ export default function App() {
     setLoading(true)
     try {
       //process expense through AI agent
-      const response = await fetch("http://localhost:8000/agent/expense/process", {
+      const response = await fetch("/agent/expense/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -79,7 +79,7 @@ export default function App() {
 
   const handleTrackGoal = async (tipId: string, tipText: string) => {
     try {
-      const response = await fetch("http://localhost:8000/api/track_goal", {
+      const response = await fetch("/api/track_goal", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
